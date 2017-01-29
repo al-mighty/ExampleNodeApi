@@ -1,15 +1,14 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var MongoClient = require('mongodb').MongoClient;
+// var db = require('.//db.js');
+var db = require('C:/openserver/domains/pureNodeApi/db.js');
 var ObjectID = require('mongodb').ObjectID;
 
 
-var app = express(),
-    db;
+var app = express();
 
 
 app.use(bodyParser.json());
-// app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 // описываем гет на урл /  Заспрос/ответ
@@ -32,20 +31,22 @@ var artists = [
 
 //получение списка
 app.get('/artists', function (req, res) {
-    db.collection('artists').find().toArray(function (err, docs) {
-        if (err) {
-            console.log("err getArtists");
-            return res.sendStatus(500);
-        }
+    db.get().collection('artists').find().toArray(
+        function (err, docs) {
+            if (err) {
+                console.log("err getArtists");
+                return res.sendStatus(500);
+            }
         res.send(docs);
-    })
-
+        }
+    );
 });
 
 // получение по айди
 app.get('/artists/:id', function (req, res) {
     //т.к все id_ это объекты необходимо конвертировать
-    db.collection('artists').findOne({
+    db.get().collection('artists').findOne(
+        {
             _id: ObjectID(req.params.id)
         },
         function (err, doc) {
@@ -56,14 +57,6 @@ app.get('/artists/:id', function (req, res) {
             res.send(doc)
         }
     );
-
-    // console.log(req.params);
-    // // res.send('test');
-    // // console.log(artists[])
-    // var artist = artists.find(function (artist) {
-    //     return artist.id === Number(req.params.id);
-    // });
-    // res.send(artist);
 });
 
 app.post('/artists', function (req, res) {
@@ -75,7 +68,7 @@ app.post('/artists', function (req, res) {
     };
 
     // artists.push(artist);
-    db.collection('artists').insertOne(artist, function (err, result) {
+    db.get().collection('artists').insertOne(artist, function (err, result) {
         if (err) {
             console.log('err collection')
             return res.sendStatus(500);
@@ -84,30 +77,49 @@ app.post('/artists', function (req, res) {
     })
 });
 
-
+//Находим объект по айди и обновляем его объектом с данными "name"
 app.put('/artists/:id', function (req, res) {
-    var artist = artists.find(function (artist) {
-        return artist.id === Number(req.params.id);
-    });
-    artist.name = req.body.name;
-    res.sendStatus(200);
+    db.get().collection('artists').updateOne(
+        { _id: ObjectID(req.params.id) },
+        { name: req.body.name },
+        function (err, result) {
+            if (err) {
+                console.log(err);
+                return res.sendStatus(500);
+            }
+            res.sendStatus(200);
+        }
+    );
 });
 
 app.delete('/artists/:id', function (req, res) {
-    artists = artists.filter(function (artist) {
-        return artist.id !== Number(req.params.id);
-    })
-    res.sendStatus(200);
+    db.get().collection('artists').deleteOne(
+        {
+            _id: ObjectID(req.params.id)
+        },
+            function (err, result){
+                if(err)
+                {
+                    console.log(err);
+                    return res.sendStatus(500);
+                }
+                res.sendStatus(200);
+            }
+    );
+
+    // artists = artists.filter(function (artist) {
+    //     return artist.id !== Number(req.params.id);
+    // });
+    // res.sendStatus(200);
 });
 
-MongoClient.connect('mongodb://localhost:27017/myapi', function (err, database) {
+db.connect('mongodb://localhost:27017/api', function (err) {
     if (err)
         return console.log(err);
-    db = database;
 
     app.listen(3012, function () {
         console.log('api app started');
     });
-})
+});
 
 

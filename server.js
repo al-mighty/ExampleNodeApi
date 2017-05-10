@@ -19,6 +19,8 @@ app.get('/artists',artistsConroller.all);
 
 // получение по айди
 app.get('/artists/:id', artistsConroller.findById);
+app.get('/artistsinfo/:artistid', artistsConroller.artistInfo);
+app.get('/api/artistsinfo/:artistid', artistsConroller.artistsReadOne);
 
 app.post('/artists', artistsConroller.create);
 
